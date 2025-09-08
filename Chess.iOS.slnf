@@ -1,0 +1,10 @@
+{
+  "solution": {
+    "path": "Chess.sln",
+    "projects": [
+      "Chess.Game\\Chess.Game.csproj",
+      "Chess.Resources\\Chess.Resources.csproj",
+      "Chess.iOS\\Chess.iOS.csproj"
+    ]
+  }
+}
