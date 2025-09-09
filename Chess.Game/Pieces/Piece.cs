@@ -26,8 +26,6 @@ namespace Chess.Game.Pieces
         public Sprite Sprite { get; protected set; }
 
         public bool IsDragging { get; private set; } = false;
-        private Vector2 dragOffset;
-
         protected TextureStore Textures { get; set; }
 
         public PieceBase(PieceColour colour)
@@ -53,7 +51,6 @@ namespace Chess.Game.Pieces
             if (e.Button == osuTK.Input.MouseButton.Left)
             {
                 IsDragging = true;
-                dragOffset = e.ScreenSpaceMousePosition - ScreenSpaceDrawQuad.TopLeft;
                 return true;
             }
             return base.OnMouseDown(e);
@@ -64,8 +61,6 @@ namespace Chess.Game.Pieces
             if (IsDragging && e.Button == osuTK.Input.MouseButton.Left)
             {
                 IsDragging = false;
-                dragOffset = Vector2.Zero;
-
                 OnPieceDropped?.Invoke(this, e.ScreenSpaceMousePosition);
             }
         }
@@ -74,7 +69,7 @@ namespace Chess.Game.Pieces
         {
             if (IsDragging)
             {
-                Position = Parent.ToLocalSpace(e.ScreenSpaceMousePosition) - dragOffset;
+                Position = Parent.ToLocalSpace(e.ScreenSpaceMousePosition) - Size / 2;
                 return true;
             }
 
