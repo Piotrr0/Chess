@@ -1,13 +1,12 @@
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Shapes;
-using osu.Framework.Graphics.Sprites;
 using osu.Framework.Screens;
 using osuTK.Graphics;
 
-namespace Chess.Game
+namespace Chess.Game.Screens
 {
-    public partial class MainScreen : Screen
+    public partial class GameScreen : Screen
     {
         [BackgroundDependencyLoader]
         private void load()

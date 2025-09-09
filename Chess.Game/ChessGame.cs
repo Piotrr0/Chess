@@ -1,6 +1,8 @@
 ﻿using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Screens;
+using Chess.Game.Board;
+using Chess.Game.Screens;
 
 namespace Chess.Game
 {
@@ -20,7 +22,8 @@ namespace Chess.Game
         {
             base.LoadComplete();
 
-            screenStack.Push(new MainScreen());
+            screenStack.Push(new GameScreen());
+            Add(new ChessBoard());
         }
     }
 }
