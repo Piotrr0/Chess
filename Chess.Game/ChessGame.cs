@@ -9,6 +9,7 @@ namespace Chess.Game
     public partial class ChessGame : ChessGameBase
     {
         private ScreenStack screenStack;
+        private ChessBoard chessBoard;
 
         [BackgroundDependencyLoader]
         private void load()
@@ -23,7 +24,10 @@ namespace Chess.Game
             base.LoadComplete();
 
             screenStack.Push(new GameScreen());
-            Add(new ChessBoard());
+
+            chessBoard = new ChessBoard();
+
+            Add(chessBoard);
         }
     }
 }

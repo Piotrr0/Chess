@@ -5,6 +5,9 @@ using osuTK;
 using osu.Framework.Graphics.Textures;
 using Chess.Game.Pieces.Textures;
 using osu.Framework.Allocation;
+using osu.Framework.Input.Events;
+using Chess.Game.Board;
+using System;
 
 namespace Chess.Game.Pieces
 {
@@ -17,9 +20,13 @@ namespace Chess.Game.Pieces
 
     public abstract partial class PieceBase : CompositeDrawable, IPiece
     {
+        public Action<PieceBase, Vector2> OnPieceDropped;
         public PieceType Type { get; protected set; } = PieceType.None;
         public PieceColour Colour { get; set; } = PieceColour.None;
         public Sprite Sprite { get; protected set; }
+
+        public bool IsDragging { get; private set; } = false;
+        private Vector2 dragOffset;
 
         protected TextureStore Textures { get; set; }
 
@@ -40,6 +47,39 @@ namespace Chess.Game.Pieces
         }
 
         protected abstract void LoadTexture();
+
+        protected override bool OnMouseDown(MouseDownEvent e)
+        {
+            if (e.Button == osuTK.Input.MouseButton.Left)
+            {
+                IsDragging = true;
+                dragOffset = e.ScreenSpaceMousePosition - ScreenSpaceDrawQuad.TopLeft;
+                return true;
+            }
+            return base.OnMouseDown(e);
+        }
+
+        protected override void OnMouseUp(MouseUpEvent e)
+        {
+            if (IsDragging && e.Button == osuTK.Input.MouseButton.Left)
+            {
+                IsDragging = false;
+                dragOffset = Vector2.Zero;
+
+                OnPieceDropped?.Invoke(this, e.ScreenSpaceMousePosition);
+            }
+        }
+
+        protected override bool OnMouseMove(MouseMoveEvent e)
+        {
+            if (IsDragging)
+            {
+                Position = Parent.ToLocalSpace(e.ScreenSpaceMousePosition) - dragOffset;
+                return true;
+            }
+
+            return base.OnMouseMove(e);
+        }
     }
 
     public partial class Pawn : PieceBase
