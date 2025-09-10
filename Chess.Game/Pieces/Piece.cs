@@ -156,6 +156,34 @@ namespace Chess.Game.Pieces
         public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
         {
             List<Vector2I> moves = new List<Vector2I>();
+
+            Vector2I[] dirs = {
+                new Vector2I(2, 1),
+                new Vector2I(2, -1),
+                new Vector2I(-2, 1),
+                new Vector2I(-2, -1),
+                new Vector2I(1, 2),
+                new Vector2I(1, -2),
+                new Vector2I(-1, 2),
+                new Vector2I(-1, -2)
+            };
+
+            foreach (Vector2I dir in dirs)
+            {
+                int targetX = from.X + dir.X;
+                int targetY = from.Y + dir.Y;
+
+                if (!ChessBoardUtils.IsInsideBoard(targetX, targetY))
+                    continue;
+
+                PieceBase targetPiece = board[targetY * ChessBoardGlobals.BOARD_SIZE + targetX];
+
+                if (targetPiece == null || targetPiece.Colour != Colour)
+                {
+                    moves.Add(new Vector2I(targetX, targetY));
+                }
+            }
+
             return moves;
         }
     }
