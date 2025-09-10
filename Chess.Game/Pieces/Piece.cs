@@ -97,20 +97,10 @@ namespace Chess.Game.Pieces
                     x += dir.X;
                     y += dir.Y;
 
-                    if (!ChessBoardUtils.IsInsideBoard(x, y))
-                        break;
-
-                    PieceBase targetPiece = board[y * ChessBoardGlobals.BOARD_SIZE + x];
-                    if (targetPiece == null)
-                    {
+                    if (ChessBoardUtils.CanMoveTo(board, x, y, Colour))
                         moves.Add(new Vector2I(x, y));
-                    }
                     else
-                    {
-                        if (targetPiece.Colour != Colour)
-                            moves.Add(new Vector2I(x, y));
                         break;
-                    }
                 }
             }
 
@@ -125,15 +115,8 @@ namespace Chess.Game.Pieces
                 int targetX = from.X + dir.X;
                 int targetY = from.Y + dir.Y;
 
-                if (!ChessBoardUtils.IsInsideBoard(targetX, targetY))
-                    continue;
-
-                PieceBase targetPiece = board[targetY * ChessBoardGlobals.BOARD_SIZE + targetX];
-
-                if (targetPiece == null || targetPiece.Colour != Colour)
-                {
+                if (ChessBoardUtils.CanMoveTo(board, targetX, targetY, Colour))
                     moves.Add(new Vector2I(targetX, targetY));
-                }
             }
             return moves;
         }

@@ -16,6 +16,8 @@ namespace Chess.Game.Board
     public partial class ChessBoard : CompositeDrawable
     {
         private Container boardContainer = null;
+        private Container pieceContainer = null;
+
         private readonly Colour4 light = Colour4.LightGray;
         private readonly Colour4 dark = Color4.SeaGreen;
 
@@ -42,11 +44,20 @@ namespace Chess.Game.Board
                 Origin = Anchor.Centre
             };
 
+            pieceContainer = new Container
+            {
+                Size = new Vector2(boardSize * squareSize, boardSize * squareSize),
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre
+            };
+
             highlightManager = new HighlightManager(boardContainer);
 
             createBoard();
             addInitialPieces();
+
             AddInternal(boardContainer);
+            AddInternal(pieceContainer);
         }
 
         private void createBoard()
@@ -107,7 +118,7 @@ namespace Chess.Game.Board
                 piece.OnPieceDropped += handlePieceDropped;
                 piece.OnPieceSelected += handlePieceSelection;
 
-                boardContainer.Add(piece);
+                pieceContainer.Add(piece);
                 board[position.Y * boardSize + position.X] = piece;
             }
         }
