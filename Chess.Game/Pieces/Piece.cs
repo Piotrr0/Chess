@@ -6,8 +6,11 @@ using osu.Framework.Graphics.Textures;
 using Chess.Game.Pieces.Textures;
 using osu.Framework.Allocation;
 using osu.Framework.Input.Events;
-using Chess.Game.Board;
+using osu.Framework.Graphics.Primitives;
 using System;
+using System.Collections.Generic;
+using Chess.Game.Board.Utils;
+using Chess.Game.Board;
 
 namespace Chess.Game.Pieces
 {
@@ -21,6 +24,8 @@ namespace Chess.Game.Pieces
     public abstract partial class PieceBase : CompositeDrawable, IPiece
     {
         public Action<PieceBase, Vector2> OnPieceDropped;
+        public Action<PieceBase, Vector2> OnPieceSelected;
+
         public PieceType Type { get; protected set; } = PieceType.None;
         public PieceColour Colour { get; set; } = PieceColour.None;
         public Sprite Sprite { get; protected set; }
@@ -51,6 +56,7 @@ namespace Chess.Game.Pieces
             if (e.Button == osuTK.Input.MouseButton.Left)
             {
                 IsDragging = true;
+                OnPieceSelected?.Invoke(this, e.ScreenSpaceMousePosition);
                 return true;
             }
             return base.OnMouseDown(e);
@@ -75,6 +81,8 @@ namespace Chess.Game.Pieces
 
             return base.OnMouseMove(e);
         }
+
+        public abstract List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from);
     }
 
     public partial class Pawn : PieceBase
@@ -93,6 +101,37 @@ namespace Chess.Game.Pieces
                 Texture = Colour == PieceColour.White ? Textures.Get(PieceTextures.WHITE_PAWN) : Textures.Get(PieceTextures.BLACK_PAWN)
             };
             AddInternal(Sprite);
+        }
+
+        public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
+        {
+            List<Vector2I> moves = new List<Vector2I>();
+
+            int dir = Colour == PieceColour.White ? 1 : -1;
+            int targetY = from.Y + dir;
+
+            if (ChessBoardUtils.IsInsideBoard(from.X, targetY) && board[targetY * ChessBoardGlobals.BOARD_SIZE + from.X] == null)
+                moves.Add(new Vector2I(from.X, targetY));
+
+            if ((Colour == PieceColour.White && from.Y == 1) || (Colour == PieceColour.Black && from.Y == 6))
+            {
+                int doubleY = from.Y + dir * 2;
+                if (board[doubleY * ChessBoardGlobals.BOARD_SIZE + from.X] == null && board[targetY * ChessBoardGlobals.BOARD_SIZE + from.X] == null)
+                    moves.Add(new Vector2I(from.X, doubleY));
+            }
+
+            foreach (int dx in new[] { -1, 1 })
+            {
+                int tx = from.X + dx;
+                if (ChessBoardUtils.IsInsideBoard(tx, targetY))
+                {
+                    var target = board[targetY * ChessBoardGlobals.BOARD_SIZE + tx];
+                    if (target != null && target.Colour != Colour)
+                        moves.Add(new Vector2I(tx, targetY));
+                }
+            }
+
+            return moves;
         }
     }
 
@@ -113,6 +152,12 @@ namespace Chess.Game.Pieces
             };
             AddInternal(Sprite);
         }
+
+        public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
+        {
+            List<Vector2I> moves = new List<Vector2I>();
+            return moves;
+        }
     }
 
     public partial class Bishop : PieceBase
@@ -131,6 +176,12 @@ namespace Chess.Game.Pieces
                 Texture = Colour == PieceColour.White ? Textures.Get(PieceTextures.WHITE_BISHOP) : Textures.Get(PieceTextures.BLACK_BISHOP)
             };
             AddInternal(Sprite);
+        }
+
+        public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
+        {
+            List<Vector2I> moves = new List<Vector2I>();
+            return moves;
         }
     }
 
@@ -151,6 +202,12 @@ namespace Chess.Game.Pieces
             };
             AddInternal(Sprite);
         }
+
+        public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
+        {
+            List<Vector2I> moves = new List<Vector2I>();
+            return moves;
+        }
     }
 
     public partial class Queen : PieceBase
@@ -170,6 +227,12 @@ namespace Chess.Game.Pieces
             };
             AddInternal(Sprite);
         }
+
+        public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
+        {
+            List<Vector2I> moves = new List<Vector2I>();
+            return moves;
+        }
     }
 
     public partial class King : PieceBase
@@ -188,6 +251,12 @@ namespace Chess.Game.Pieces
                 Texture = Colour == PieceColour.White ? Textures.Get(PieceTextures.WHITE_KING) : Textures.Get(PieceTextures.BLACK_KING)
             };
             AddInternal(Sprite);
+        }
+
+        public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
+        {
+            List<Vector2I> moves = new List<Vector2I>();
+            return moves;
         }
     }
 }

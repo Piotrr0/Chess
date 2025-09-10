@@ -7,6 +7,8 @@ using osuTK.Graphics;
 using Chess.Game.Pieces.Positions;
 using Chess.Game.Pieces;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Chess.Game.Board
 {
@@ -20,7 +22,11 @@ namespace Chess.Game.Board
         private readonly float squareSize = ChessBoardGlobals.SQUARE_SIZE;
 
         private PieceBase[] board = new PieceBase[8 * 8];
-        public PieceBase SelectedPiece { get; set; }
+
+        private Vector2I selectedPieceOrigin;
+
+
+        private List<Vector2I> validMoves;
 
         public ChessBoard()
         {
@@ -60,7 +66,7 @@ namespace Chess.Game.Board
         }
 
         /*X - col | Y - row*/
-        public Vector2 CalculatePiecePosition(Vector2 position, float padding = 0f)
+        public Vector2 CalculatePiecePosition(Vector2I position, float padding = 0f)
         {
             float x = position.X * squareSize + squareSize * padding;
             float y = position.Y * squareSize + squareSize * padding;
@@ -95,21 +101,38 @@ namespace Chess.Game.Board
                 piece.Position = CalculatePiecePosition(position);
 
                 piece.OnPieceDropped += handlePieceDropped;
+                piece.OnPieceSelected += handlePieceSelection;
 
                 boardContainer.Add(piece);
                 board[position.Y * boardSize + position.X] = piece;
             }
         }
 
+        private void handlePieceSelection(PieceBase piece, Vector2 screenPosition)
+        {
+            selectedPieceOrigin = CalculateIndiciesForPosition(screenPosition);
+            validMoves = piece.GenerateMoves(board, selectedPieceOrigin).ToList();
+
+            Console.WriteLine(validMoves.Count);
+            foreach (var move in validMoves)
+            {
+                Console.WriteLine($"{move.X} + {move.Y}");
+            }
+        }
+
         private void handlePieceDropped(PieceBase piece, Vector2 screenPosition)
         {
             Vector2I target = CalculateIndiciesForPosition(screenPosition);
-            Vector2I current = CalculateIndiciesForPosition(piece.Position);
 
+            if (!validMoves.Contains(target))
+            {
+                piece.Position = CalculatePiecePosition(selectedPieceOrigin);
+                return;
+            }
             board[target.Y * boardSize + target.X] = piece;
-            board[current.Y * boardSize + current.X] = null;
-
-            piece.Position = CalculatePiecePosition(new Vector2(target.X, target.Y));
+            board[selectedPieceOrigin.Y * boardSize + selectedPieceOrigin.X] = null;
+            
+            piece.Position = CalculatePiecePosition(target);
         }
     }
 }
