@@ -113,10 +113,10 @@ namespace Chess.Game.Board
             selectedPieceOrigin = CalculateIndiciesForPosition(screenPosition);
             validMoves = piece.GenerateMoves(board, selectedPieceOrigin).ToList();
 
-            Console.WriteLine(validMoves.Count);
+            Console.WriteLine($"Valid Moves: {validMoves.Count}");
             foreach (var move in validMoves)
             {
-                Console.WriteLine($"{move.X} + {move.Y}");
+                Console.Write($"({move.X},{move.Y}) ");
             }
         }
 

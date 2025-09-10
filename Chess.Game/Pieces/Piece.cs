@@ -116,6 +116,27 @@ namespace Chess.Game.Pieces
 
             return moves;
         }
+
+        protected List<Vector2I> AddMovesFromOffsets(Vector2I[] dirs, PieceBase[] board, Vector2I from)
+        {
+            List<Vector2I> moves = new List<Vector2I>();
+            foreach (Vector2I dir in dirs)
+            {
+                int targetX = from.X + dir.X;
+                int targetY = from.Y + dir.Y;
+
+                if (!ChessBoardUtils.IsInsideBoard(targetX, targetY))
+                    continue;
+
+                PieceBase targetPiece = board[targetY * ChessBoardGlobals.BOARD_SIZE + targetX];
+
+                if (targetPiece == null || targetPiece.Colour != Colour)
+                {
+                    moves.Add(new Vector2I(targetX, targetY));
+                }
+            }
+            return moves;
+        }
     }
 
     public partial class Pawn : PieceBase
@@ -188,8 +209,6 @@ namespace Chess.Game.Pieces
 
         public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
         {
-            List<Vector2I> moves = new List<Vector2I>();
-
             Vector2I[] dirs = {
                 new Vector2I(2, 1),
                 new Vector2I(2, -1),
@@ -201,23 +220,7 @@ namespace Chess.Game.Pieces
                 new Vector2I(-1, -2)
             };
 
-            foreach (Vector2I dir in dirs)
-            {
-                int targetX = from.X + dir.X;
-                int targetY = from.Y + dir.Y;
-
-                if (!ChessBoardUtils.IsInsideBoard(targetX, targetY))
-                    continue;
-
-                PieceBase targetPiece = board[targetY * ChessBoardGlobals.BOARD_SIZE + targetX];
-
-                if (targetPiece == null || targetPiece.Colour != Colour)
-                {
-                    moves.Add(new Vector2I(targetX, targetY));
-                }
-            }
-
-            return moves;
+            return AddMovesFromOffsets(dirs, board, from);
         }
     }
 
@@ -339,8 +342,18 @@ namespace Chess.Game.Pieces
 
         public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
         {
-            List<Vector2I> moves = new List<Vector2I>();
-            return moves;
+            Vector2I[] dirs = {
+                new Vector2I( 1,  0),
+                new Vector2I(-1,  0),
+                new Vector2I( 0,  1),
+                new Vector2I( 0, -1),
+                new Vector2I( 1,  1),
+                new Vector2I( 1, -1),
+                new Vector2I(-1,  1),
+                new Vector2I(-1, -1)
+            };
+
+            return AddMovesFromOffsets(dirs, board, from);
         }
     }
 }
