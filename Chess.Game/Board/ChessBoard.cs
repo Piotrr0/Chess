@@ -124,8 +124,16 @@ namespace Chess.Game.Board
 
         private void handlePieceSelection(PieceBase piece, Vector2 screenPosition)
         {
+            PieceColour currentPlayer = GameManager.Instance.GetMoveColour();
+            if (piece.Colour != currentPlayer)
+            {
+                return;
+            }
+
             selectedPieceOrigin = CalculateIndiciesForPosition(screenPosition);
-            validMoves = piece.GenerateMoves(board, selectedPieceOrigin);
+            
+            List<Vector2I> candidateMoves = piece.GenerateMoves(board, selectedPieceOrigin);
+            validMoves = GameManager.Instance.FilterLegalMoves(board, selectedPieceOrigin, candidateMoves);
 
             List<Vector2> highlightPositions = validMoves.Select(move => CalculatePiecePosition(move)).ToList();
             highlightManager.HighlightCells(highlightPositions);
@@ -147,10 +155,18 @@ namespace Chess.Game.Board
                 piece.Position = CalculatePiecePosition(selectedPieceOrigin);
                 return;
             }
+            
+            PieceBase capturedPiece = board[target.Y * boardSize + target.X];
             board[target.Y * boardSize + target.X] = piece;
             board[selectedPieceOrigin.Y * boardSize + selectedPieceOrigin.X] = null;
 
             piece.Position = CalculatePiecePosition(target);
+
+            if (capturedPiece != null)
+            {
+                pieceContainer.Remove(capturedPiece, true);
+            }
+
             GameManager.Instance.ToogleMove();
         }
     }
