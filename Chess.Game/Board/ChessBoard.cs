@@ -6,6 +6,7 @@ using osuTK;
 using osuTK.Graphics;
 using Chess.Game.Pieces.Positions;
 using Chess.Game.Pieces;
+using Chess.Game.Board.Highlight;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,8 @@ namespace Chess.Game.Board
     public partial class ChessBoard : CompositeDrawable
     {
         private Container boardContainer = null;
+        private Container pieceContainer = null;
+
         private readonly Colour4 light = Colour4.LightGray;
         private readonly Colour4 dark = Color4.SeaGreen;
 
@@ -22,6 +25,7 @@ namespace Chess.Game.Board
         private readonly float squareSize = ChessBoardGlobals.SQUARE_SIZE;
 
         private PieceBase[] board = new PieceBase[8 * 8];
+        private IHighlightManager highlightManager = null;
 
         private Vector2I selectedPieceOrigin;
 
@@ -40,9 +44,20 @@ namespace Chess.Game.Board
                 Origin = Anchor.Centre
             };
 
+            pieceContainer = new Container
+            {
+                Size = new Vector2(boardSize * squareSize, boardSize * squareSize),
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre
+            };
+
+            highlightManager = new HighlightManager(boardContainer);
+
             createBoard();
             addInitialPieces();
+
             AddInternal(boardContainer);
+            AddInternal(pieceContainer);
         }
 
         private void createBoard()
@@ -103,7 +118,7 @@ namespace Chess.Game.Board
                 piece.OnPieceDropped += handlePieceDropped;
                 piece.OnPieceSelected += handlePieceSelection;
 
-                boardContainer.Add(piece);
+                pieceContainer.Add(piece);
                 board[position.Y * boardSize + position.X] = piece;
             }
         }
@@ -111,7 +126,10 @@ namespace Chess.Game.Board
         private void handlePieceSelection(PieceBase piece, Vector2 screenPosition)
         {
             selectedPieceOrigin = CalculateIndiciesForPosition(screenPosition);
-            validMoves = piece.GenerateMoves(board, selectedPieceOrigin).ToList();
+            validMoves = piece.GenerateMoves(board, selectedPieceOrigin);
+
+            List<Vector2> highlightPositions = validMoves.Select(move => CalculatePiecePosition(move)).ToList();
+            highlightManager.HighlightCells(highlightPositions);
 
             Console.WriteLine($"Valid Moves: {validMoves.Count}");
             foreach (var move in validMoves)
@@ -122,6 +140,7 @@ namespace Chess.Game.Board
 
         private void handlePieceDropped(PieceBase piece, Vector2 screenPosition)
         {
+            highlightManager.ClearAll();
             Vector2I target = CalculateIndiciesForPosition(screenPosition);
 
             if (!validMoves.Contains(target))
