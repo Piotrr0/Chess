@@ -54,7 +54,8 @@ namespace Chess.Game.Pieces
 
         protected override bool OnMouseDown(MouseDownEvent e)
         {
-            if(Colour == GameManager.Instance.GetMoveColour())
+            if (Colour != GameManager.Instance.GetMoveColour())
+                return false;
 
             if (e.Button == osuTK.Input.MouseButton.Left)
             {
@@ -100,10 +101,24 @@ namespace Chess.Game.Pieces
                     x += dir.X;
                     y += dir.Y;
 
-                    if (ChessBoardUtils.CanMoveTo(board, x, y, Colour))
-                        moves.Add(new Vector2I(x, y));
-                    else
+                    if (!ChessBoardUtils.IsInsideBoard(x, y))
                         break;
+
+                    PieceBase pieceAtTarget = board[y * ChessBoardGlobals.BOARD_SIZE + x];
+                    
+                    if (pieceAtTarget == null)
+                    {
+                        moves.Add(new Vector2I(x, y));
+                    }
+                    else if (pieceAtTarget.Colour != Colour)
+                    {
+                        moves.Add(new Vector2I(x, y));
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -266,7 +281,6 @@ namespace Chess.Game.Pieces
                 new Vector2I(-1,  0),
                 new Vector2I( 0,  1),
                 new Vector2I( 0, -1),
-                
             };
 
             return GetMovesInDirections(dirs, board, from);
