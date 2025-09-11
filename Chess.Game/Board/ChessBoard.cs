@@ -7,6 +7,7 @@ using osuTK.Graphics;
 using Chess.Game.Pieces.Positions;
 using Chess.Game.Pieces;
 using Chess.Game.Board.Highlight;
+using Chess.Game.Manager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,8 +29,6 @@ namespace Chess.Game.Board
         private IHighlightManager highlightManager = null;
 
         private Vector2I selectedPieceOrigin;
-
-
         private List<Vector2I> validMoves;
 
         public ChessBoard()
@@ -150,8 +149,9 @@ namespace Chess.Game.Board
             }
             board[target.Y * boardSize + target.X] = piece;
             board[selectedPieceOrigin.Y * boardSize + selectedPieceOrigin.X] = null;
-            
+
             piece.Position = CalculatePiecePosition(target);
+            GameManager.Instance.ToogleMove();
         }
     }
 }
