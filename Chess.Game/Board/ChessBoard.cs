@@ -152,6 +152,12 @@ namespace Chess.Game.Board
 
             piece.Position = CalculatePiecePosition(target);
             GameManager.Instance.ToogleMove();
+
+            PieceColour enemyColour = GameManager.Instance.GetMoveColour();
+            if (GameManager.Instance.IsKingInCheck(board, enemyColour))
+            {
+                Console.WriteLine($"{enemyColour} King Check");
+            }
         }
     }
 }
