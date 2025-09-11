@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using Chess.Game.Board.Utils;
 using Chess.Game.Board;
+using Chess.Game.Manager;
 
 namespace Chess.Game.Pieces
 {
@@ -23,8 +24,8 @@ namespace Chess.Game.Pieces
 
     public abstract partial class PieceBase : CompositeDrawable, IPiece
     {
-        public Action<PieceBase, Vector2> OnPieceDropped;
-        public Action<PieceBase, Vector2> OnPieceSelected;
+        public event Action<PieceBase, Vector2> OnPieceDropped;
+        public event Action<PieceBase, Vector2> OnPieceSelected;
 
         public PieceType Type { get; protected set; } = PieceType.None;
         public PieceColour Colour { get; set; } = PieceColour.None;
@@ -53,6 +54,8 @@ namespace Chess.Game.Pieces
 
         protected override bool OnMouseDown(MouseDownEvent e)
         {
+            if(Colour == GameManager.Instance.GetMoveColour())
+
             if (e.Button == osuTK.Input.MouseButton.Left)
             {
                 IsDragging = true;
