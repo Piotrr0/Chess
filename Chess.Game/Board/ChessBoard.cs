@@ -8,6 +8,7 @@ using Chess.Game.Pieces.Positions;
 using Chess.Game.Pieces;
 using Chess.Game.Board.Highlight;
 using Chess.Game.Manager;
+using Chess.Game.UI.GameOver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,6 +58,28 @@ namespace Chess.Game.Board
 
             AddInternal(boardContainer);
             AddInternal(pieceContainer);
+
+            subscribeEvents();
+        }
+
+        private void subscribeEvents()
+        {
+            GameManager.Instance.OnCheckmate += colour =>
+            {
+                string winner = colour == PieceColour.White ? "Black" : "White";
+                showGameOverPopup($"{winner} wins by checkmate");
+            };
+
+            GameManager.Instance.OnStalemate += colour =>
+            {
+                showGameOverPopup("Draw by stalemate");
+            };
+        }
+
+        private void showGameOverPopup(string message)
+        {
+            GameOverPopup popup = new GameOverPopup(message);
+            AddInternal(popup);
         }
 
         private void createBoard()
@@ -168,6 +191,30 @@ namespace Chess.Game.Board
             }
 
             GameManager.Instance.ToogleMove();
+            checkGameState();
+        }
+
+        private void checkGameState()
+        {
+            PieceColour currentPlayer = GameManager.Instance.GetMoveColour();
+
+            bool isInCheck = GameManager.Instance.IsKingInCheck(board, currentPlayer);
+            bool isCheckmate = GameManager.Instance.IsCheckmate(board, currentPlayer);
+            bool isStalemate = GameManager.Instance.IsStalemate(board, currentPlayer);
+
+            if (isCheckmate)
+            {
+                PieceColour winner = currentPlayer == PieceColour.White ? PieceColour.Black : PieceColour.White;
+                Console.WriteLine($"Checkmate {winner} wins");
+            }
+            else if (isStalemate)
+            {
+                Console.WriteLine("Stalemate The game is a draw");
+            }
+            else if (isInCheck)
+            {
+                Console.WriteLine($"{currentPlayer} King is in check");
+            }
         }
     }
 }
