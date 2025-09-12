@@ -168,6 +168,30 @@ namespace Chess.Game.Board
             }
 
             GameManager.Instance.ToogleMove();
+            checkGameState();
+        }
+
+        private void checkGameState()
+        {
+            PieceColour currentPlayer = GameManager.Instance.GetMoveColour();
+
+            bool isInCheck = GameManager.Instance.IsKingInCheck(board, currentPlayer);
+            bool isCheckmate = GameManager.Instance.IsCheckmate(board, currentPlayer);
+            bool isStalemate = GameManager.Instance.IsStalemate(board, currentPlayer);
+
+            if (isCheckmate)
+            {
+                PieceColour winner = currentPlayer == PieceColour.White ? PieceColour.Black : PieceColour.White;
+                Console.WriteLine($"Checkmate {winner} wins");
+            }
+            else if (isStalemate)
+            {
+                Console.WriteLine("Stalemate The game is a draw");
+            }
+            else if (isInCheck)
+            {
+                Console.WriteLine($"{currentPlayer} King is in check");
+            }
         }
     }
 }

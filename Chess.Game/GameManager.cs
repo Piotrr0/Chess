@@ -9,6 +9,10 @@ namespace Chess.Game.Manager
 {
     public class GameManager
     {
+        public Action<PieceColour /* Check Piece Colour */> OnCheck;
+        public Action<PieceColour /* CheckMate Piece Colour */> OnCheckmate;
+        public Action<PieceColour /* Stalemate Piece Colour */> OnStalemate;
+
         private bool whiteMove = true;
 
         private static GameManager instance = null;
@@ -43,9 +47,12 @@ namespace Chess.Game.Manager
 
                 Vector2I piecePos = new Vector2I(i % ChessBoardGlobals.BOARD_SIZE, i / ChessBoardGlobals.BOARD_SIZE);
                 List<Vector2I> moves = piece.GenerateMoves(board, piecePos);
-                
+
                 if (moves.Contains(kingPos))
+                {
+                    OnCheck?.Invoke(kingColour);
                     return true;
+                }
             }
 
             return false;
@@ -89,6 +96,46 @@ namespace Chess.Game.Manager
             }
 
             return legalMoves;
+        }
+
+        public bool HasLegalMoves(PieceBase[] board, PieceColour playerColour)
+        {
+            for (int i = 0; i < board.Length; i++)
+            {
+                PieceBase piece = board[i];
+                if (piece == null || piece.Colour != playerColour)
+                    continue;
+
+                Vector2I piecePos = new Vector2I(i % ChessBoardGlobals.BOARD_SIZE, i / ChessBoardGlobals.BOARD_SIZE);
+                List<Vector2I> candidateMoves = piece.GenerateMoves(board, piecePos);
+                List<Vector2I> legalMoves = FilterLegalMoves(board, piecePos, candidateMoves);
+
+                if (legalMoves.Count > 0)
+                    return true;
+            }
+            return false;
+        }
+
+        public bool IsCheckmate(PieceBase[] board, PieceColour playerColour)
+        {
+            bool isCheckmate = IsKingInCheck(board, playerColour) && !HasLegalMoves(board, playerColour);
+            if (isCheckmate)
+            {
+                OnCheckmate?.Invoke(playerColour);
+                return true;
+            }
+            return false;
+        }
+
+        public bool IsStalemate(PieceBase[] board, PieceColour playerColour)
+        {
+            bool isStalemate = !IsKingInCheck(board, playerColour) && !HasLegalMoves(board, playerColour);
+            if (isStalemate)
+            {
+                OnStalemate?.Invoke(playerColour);
+                return true;
+            }
+            return false;
         }
     }
 }
