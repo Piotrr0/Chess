@@ -180,9 +180,21 @@ namespace Chess.Game.Board
             }
             
             PieceBase capturedPiece = board[target.Y * boardSize + target.X];
+
+            if (piece is Pawn pawn)
+            {
+                PieceBase captured = pawn.GetEnPassantCapturedPiece(board, selectedPieceOrigin, target);
+                if (captured != null)
+                {
+                    capturedPiece = captured;
+                    Vector2I capturedPos = CalculateIndiciesForPosition(capturedPiece.Position);
+                    board[capturedPos.Y * boardSize + capturedPos.X] = null;
+                    pieceContainer.Remove(capturedPiece, true);
+                }
+            }
+
             board[target.Y * boardSize + target.X] = piece;
             board[selectedPieceOrigin.Y * boardSize + selectedPieceOrigin.X] = null;
-
             piece.Position = CalculatePiecePosition(target);
 
             if (capturedPiece != null)
@@ -190,8 +202,8 @@ namespace Chess.Game.Board
                 pieceContainer.Remove(capturedPiece, true);
             }
 
+            piece.OnMove(selectedPieceOrigin, target);
             checkForCastling(piece, target);
-
             GameManager.Instance.ToogleMove();
             checkGameState();
         }
@@ -222,7 +234,6 @@ namespace Chess.Game.Board
             {
                 board[rookTarget.Y * boardSize + rookTarget.X] = rook;
                 board[rookOrigin.Y * boardSize + rookOrigin.X] = null;
-                rook.OnMove();
                 rook.Position = CalculatePiecePosition(rookTarget);
             }
         }

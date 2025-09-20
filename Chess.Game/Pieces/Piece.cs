@@ -52,7 +52,7 @@ namespace Chess.Game.Pieces
             LoadTexture();
         }
 
-        public void OnMove()
+        public virtual void OnMove(Vector2I from, Vector2I to)
         {
             HasMoved = true;
         }
@@ -165,6 +165,30 @@ namespace Chess.Game.Pieces
             AddInternal(Sprite);
         }
 
+        public PieceBase GetEnPassantCapturedPiece(PieceBase[] board, Vector2I from, Vector2I to)
+        {
+            if (GameManager.Instance.EnPassantTarget.HasValue && to == GameManager.Instance.EnPassantTarget.Value)
+            {
+                int dir = Colour == PieceColour.White ? -1 : 1;
+                Vector2I capturedPos = new Vector2I(to.X, to.Y + dir);
+                return board[capturedPos.Y * ChessBoardGlobals.BOARD_SIZE + capturedPos.X];
+            }
+            return null;
+        }
+
+        public override void OnMove(Vector2I from, Vector2I to)
+        {
+            base.OnMove(from, to);
+
+            GameManager.Instance.ClearEnPassant();
+
+            if (Math.Abs(to.Y - from.Y) == 2)
+            {
+                int targetY = (to.Y + from.Y) / 2;
+                GameManager.Instance.EnPassantTarget = new Vector2I(to.X, targetY);
+            }
+        }
+
         public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
         {
             List<Vector2I> moves = new List<Vector2I>();
@@ -190,6 +214,15 @@ namespace Chess.Game.Pieces
                     var target = board[targetY * ChessBoardGlobals.BOARD_SIZE + tx];
                     if (target != null && target.Colour != Colour)
                         moves.Add(new Vector2I(tx, targetY));
+                }
+            }
+
+            if (GameManager.Instance.EnPassantTarget.HasValue)
+            {
+                Vector2I enPassant = GameManager.Instance.EnPassantTarget.Value;
+                if (Math.Abs(enPassant.X - from.X) == 1 && enPassant.Y == targetY)
+                {
+                    moves.Add(enPassant);
                 }
             }
 

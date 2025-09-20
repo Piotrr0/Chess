@@ -14,6 +14,7 @@ namespace Chess.Game.Manager
         public Action<PieceColour /* Stalemate Piece Colour */> OnStalemate;
 
         private bool whiteMove = true;
+        public Vector2I? EnPassantTarget { get; set; } = null;
 
         private static GameManager instance = null;
         public static GameManager Instance
@@ -33,6 +34,11 @@ namespace Chess.Game.Manager
         public void ToogleMove()
         {
             whiteMove = !whiteMove;
+        }
+
+        public void ClearEnPassant()
+        {
+            EnPassantTarget = null;
         }
 
         public bool IsKingInCheck(PieceBase[] board, PieceColour kingColour)
