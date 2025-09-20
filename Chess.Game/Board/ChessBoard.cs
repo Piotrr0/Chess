@@ -190,8 +190,41 @@ namespace Chess.Game.Board
                 pieceContainer.Remove(capturedPiece, true);
             }
 
+            checkForCastling(piece, target);
+
             GameManager.Instance.ToogleMove();
             checkGameState();
+        }
+
+        private void checkForCastling(PieceBase piece, Vector2I target)
+        {
+            if (piece is King)
+            {
+                int deltaX = target.X - selectedPieceOrigin.X;
+
+                if (deltaX == 2)
+                {
+                    int row = target.Y;
+                    moveRookForCastling(new Vector2I(7, row), new Vector2I(5, row));
+                }
+                else if (deltaX == -2)
+                {
+                    int row = target.Y;
+                    moveRookForCastling(new Vector2I(0, row), new Vector2I(3, row));
+                }
+            }
+        }
+
+        private void moveRookForCastling(Vector2I rookOrigin, Vector2I rookTarget)
+        {
+            PieceBase rook = board[rookOrigin.Y * boardSize + rookOrigin.X];
+            if (rook != null)
+            {
+                board[rookTarget.Y * boardSize + rookTarget.X] = rook;
+                board[rookOrigin.Y * boardSize + rookOrigin.X] = null;
+                rook.OnMove();
+                rook.Position = CalculatePiecePosition(rookTarget);
+            }
         }
 
         private void checkGameState()

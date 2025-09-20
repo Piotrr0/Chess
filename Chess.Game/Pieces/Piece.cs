@@ -20,6 +20,7 @@ namespace Chess.Game.Pieces
         PieceType Type { get; }
         PieceColour Colour { get; set; }
         Sprite Sprite { get; }
+        bool HasMoved { get; }
     }
 
     public abstract partial class PieceBase : CompositeDrawable, IPiece
@@ -30,6 +31,7 @@ namespace Chess.Game.Pieces
         public PieceType Type { get; protected set; } = PieceType.None;
         public PieceColour Colour { get; set; } = PieceColour.None;
         public Sprite Sprite { get; protected set; }
+        public bool HasMoved { get; set; } = false;
 
         public bool IsDragging { get; private set; } = false;
         protected TextureStore Textures { get; set; }
@@ -48,6 +50,11 @@ namespace Chess.Game.Pieces
         {
             Textures = textures;
             LoadTexture();
+        }
+
+        public void OnMove()
+        {
+            HasMoved = true;
         }
 
         protected abstract void LoadTexture();
@@ -88,7 +95,7 @@ namespace Chess.Game.Pieces
 
         public abstract List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from);
 
-        protected List<Vector2I> GetMovesInDirections(Vector2I[] dirs, PieceBase[] board, Vector2I from)
+        public List<Vector2I> GetMovesInDirections(Vector2I[] dirs, PieceBase[] board, Vector2I from)
         {
             List<Vector2I> moves = new List<Vector2I>();
             foreach (Vector2I dir in dirs)
@@ -125,7 +132,7 @@ namespace Chess.Game.Pieces
             return moves;
         }
 
-        protected List<Vector2I> AddMovesFromOffsets(Vector2I[] dirs, PieceBase[] board, Vector2I from)
+        public List<Vector2I> AddMovesFromOffsets(Vector2I[] dirs, PieceBase[] board, Vector2I from)
         {
             List<Vector2I> moves = new List<Vector2I>();
             foreach (Vector2I dir in dirs)
@@ -342,6 +349,8 @@ namespace Chess.Game.Pieces
 
         public override List<Vector2I> GenerateMoves(PieceBase[] board, Vector2I from)
         {
+            List<Vector2I> moves = new List<Vector2I>();
+            
             Vector2I[] dirs = {
                 new Vector2I( 1,  0),
                 new Vector2I(-1,  0),
@@ -353,7 +362,64 @@ namespace Chess.Game.Pieces
                 new Vector2I(-1, -1)
             };
 
-            return AddMovesFromOffsets(dirs, board, from);
+            moves.AddRange(AddMovesFromOffsets(dirs, board, from));
+
+            if (!HasMoved)
+            {
+                if (canCastle(board, from, new Vector2I(7, from.Y), true))
+                    moves.Add(new Vector2I(from.X + 2, from.Y));
+
+                if (canCastle(board, from, new Vector2I(0, from.Y), false))
+                    moves.Add(new Vector2I(from.X - 2, from.Y));
+            }
+
+            return moves;
+        }
+
+        private bool canCastle(PieceBase[] board, Vector2I kingPos, Vector2I rookPos, bool kingSide)
+        {
+            PieceBase rook = board[rookPos.Y * ChessBoardGlobals.BOARD_SIZE + rookPos.X];
+            if (rook == null|| rook.Colour != Colour || rook.HasMoved)
+                return false;
+
+            int direction = kingSide ? 1 : -1;
+
+            for (int x = kingPos.X + direction; x != rookPos.X; x += direction)
+            {
+                if (board[kingPos.Y * ChessBoardGlobals.BOARD_SIZE + x] != null)
+                    return false;
+            }
+
+            PieceColour opponent = Colour == PieceColour.White ? PieceColour.Black : PieceColour.White;
+
+            if (GameManager.Instance.IsSquareAttacked(board, kingPos, opponent))
+                return false;
+
+            for (int step = 1; step <= 2; step++)
+            {
+                int x = kingPos.X + step * direction;
+                if (!ChessBoardUtils.IsInsideBoard(x, kingPos.Y))
+                    return false;
+
+                int fromIndex = kingPos.Y * ChessBoardGlobals.BOARD_SIZE + kingPos.X;
+                int testIndex = kingPos.Y * ChessBoardGlobals.BOARD_SIZE + x;
+
+                PieceBase originalFrom = board[fromIndex];
+                PieceBase originalTo = board[testIndex];
+
+                board[fromIndex] = null;
+                board[testIndex] = originalFrom;
+
+                bool attacked = GameManager.Instance.IsSquareAttacked(board, new Vector2I(x, kingPos.Y), opponent);
+
+                board[fromIndex] = originalFrom;
+                board[testIndex] = originalTo;
+
+                if (attacked)
+                    return false;
+            }
+
+            return true;
         }
     }
 }
