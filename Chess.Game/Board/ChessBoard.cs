@@ -180,9 +180,21 @@ namespace Chess.Game.Board
             }
             
             PieceBase capturedPiece = board[target.Y * boardSize + target.X];
+
+            if (piece is Pawn pawn)
+            {
+                PieceBase captured = pawn.GetEnPassantCapturedPiece(board, selectedPieceOrigin, target);
+                if (captured != null)
+                {
+                    capturedPiece = captured;
+                    Vector2I capturedPos = CalculateIndiciesForPosition(capturedPiece.Position);
+                    board[capturedPos.Y * boardSize + capturedPos.X] = null;
+                    pieceContainer.Remove(capturedPiece, true);
+                }
+            }
+
             board[target.Y * boardSize + target.X] = piece;
             board[selectedPieceOrigin.Y * boardSize + selectedPieceOrigin.X] = null;
-
             piece.Position = CalculatePiecePosition(target);
 
             if (capturedPiece != null)
@@ -190,8 +202,40 @@ namespace Chess.Game.Board
                 pieceContainer.Remove(capturedPiece, true);
             }
 
+            piece.OnMove(selectedPieceOrigin, target);
+            checkForCastling(piece, target);
             GameManager.Instance.ToogleMove();
             checkGameState();
+        }
+
+        private void checkForCastling(PieceBase piece, Vector2I target)
+        {
+            if (piece is King)
+            {
+                int deltaX = target.X - selectedPieceOrigin.X;
+
+                if (deltaX == 2)
+                {
+                    int row = target.Y;
+                    moveRookForCastling(new Vector2I(7, row), new Vector2I(5, row));
+                }
+                else if (deltaX == -2)
+                {
+                    int row = target.Y;
+                    moveRookForCastling(new Vector2I(0, row), new Vector2I(3, row));
+                }
+            }
+        }
+
+        private void moveRookForCastling(Vector2I rookOrigin, Vector2I rookTarget)
+        {
+            PieceBase rook = board[rookOrigin.Y * boardSize + rookOrigin.X];
+            if (rook != null)
+            {
+                board[rookTarget.Y * boardSize + rookTarget.X] = rook;
+                board[rookOrigin.Y * boardSize + rookOrigin.X] = null;
+                rook.Position = CalculatePiecePosition(rookTarget);
+            }
         }
 
         private void checkGameState()

@@ -14,6 +14,7 @@ namespace Chess.Game.Manager
         public Action<PieceColour /* Stalemate Piece Colour */> OnStalemate;
 
         private bool whiteMove = true;
+        public Vector2I? EnPassantTarget { get; set; } = null;
 
         private static GameManager instance = null;
         public static GameManager Instance
@@ -35,28 +36,25 @@ namespace Chess.Game.Manager
             whiteMove = !whiteMove;
         }
 
+        public void ClearEnPassant()
+        {
+            EnPassantTarget = null;
+        }
+
         public bool IsKingInCheck(PieceBase[] board, PieceColour kingColour)
         {
             Vector2I kingPos = findKingPosition(board, kingColour);
+            if (kingPos.X == -1) return false;
 
-            for (int i = 0; i < board.Length; i++)
-            {
-                PieceBase piece = board[i];
-                if (piece == null || piece.Colour == kingColour)
-                    continue;
+            PieceColour opponent = kingColour == PieceColour.White ? PieceColour.Black : PieceColour.White;
+            bool attacked = IsSquareAttacked(board, kingPos, opponent);
 
-                Vector2I piecePos = new Vector2I(i % ChessBoardGlobals.BOARD_SIZE, i / ChessBoardGlobals.BOARD_SIZE);
-                List<Vector2I> moves = piece.GenerateMoves(board, piecePos);
+            if (attacked)
+                OnCheck?.Invoke(kingColour);
 
-                if (moves.Contains(kingPos))
-                {
-                    OnCheck?.Invoke(kingColour);
-                    return true;
-                }
-            }
-
-            return false;
+            return attacked;
         }
+
 
         private Vector2I findKingPosition(PieceBase[] board, PieceColour kingColour)
         {
@@ -70,6 +68,84 @@ namespace Chess.Game.Manager
             return new Vector2I(-1, -1);
         }
 
+        public bool IsSquareAttacked(PieceBase[] board, Vector2I square, PieceColour byColour)
+        {
+            for (int i = 0; i < board.Length; i++)
+            {
+                PieceBase piece = board[i];
+                if (piece == null || piece.Colour != byColour)
+                    continue;
+
+                Vector2I from = new Vector2I(i % ChessBoardGlobals.BOARD_SIZE, i / ChessBoardGlobals.BOARD_SIZE);
+
+                switch (piece.Type)
+                {
+                    case PieceType.Pawn:
+                    {
+                        int dir = (byColour == PieceColour.White) ? 1 : -1;
+                        if (from + new Vector2I(1, dir) == square) return true;
+                        if (from + new Vector2I(-1, dir) == square) return true;
+                    }
+                    break;
+
+                    case PieceType.Knight:
+                    {
+                        Vector2I[] knightOffsets = {
+                            new Vector2I( 2,  1), new Vector2I( 2, -1),
+                            new Vector2I(-2,  1), new Vector2I(-2, -1),
+                            new Vector2I( 1,  2), new Vector2I( 1, -2),
+                            new Vector2I(-1,  2), new Vector2I(-1, -2)
+                        };
+
+                        foreach (var target in piece.AddMovesFromOffsets(knightOffsets, board, from))
+                            if (target == square) return true;
+                    }
+                    break;
+
+                    case PieceType.Bishop:
+                    {
+                        Vector2I[] dirs = { new Vector2I(1, 1), new Vector2I(1, -1), new Vector2I(-1, 1), new Vector2I(-1, -1) };
+                        foreach (var target in piece.GetMovesInDirections(dirs, board, from))
+                            if (target == square) return true;
+                    }
+                    break;
+
+                    case PieceType.Rook:
+                    {
+                        Vector2I[] dirs = { new Vector2I(1, 0), new Vector2I(-1, 0), new Vector2I(0, 1), new Vector2I(0, -1) };
+                        foreach (var target in piece.GetMovesInDirections(dirs, board, from))
+                            if (target == square) return true;
+                    }
+                    break;
+
+                    case PieceType.Queen:
+                    {
+                        Vector2I[] dirs = {
+                            new Vector2I(1,0), new Vector2I(-1,0), new Vector2I(0,1), new Vector2I(0,-1),
+                            new Vector2I(1,1), new Vector2I(1,-1), new Vector2I(-1,1), new Vector2I(-1,-1)
+                        };
+                        foreach (var target in piece.GetMovesInDirections(dirs, board, from))
+                            if (target == square) return true;
+                    }
+                    break;
+
+                    case PieceType.King:
+                    {
+                        Vector2I[] dirs = {
+                            new Vector2I( 1,  0), new Vector2I(-1,  0),
+                            new Vector2I( 0,  1), new Vector2I( 0, -1),
+                            new Vector2I( 1,  1), new Vector2I( 1, -1),
+                            new Vector2I(-1,  1), new Vector2I(-1, -1)
+                        };
+                        foreach (var target in piece.AddMovesFromOffsets(dirs, board, from))
+                            if (target == square) return true;
+                    }
+                    break;
+                }
+            }
+            return false;
+        }
+
         public List<Vector2I> FilterLegalMoves(PieceBase[] board, Vector2I from, List<Vector2I> candidateMoves)
         {
             List<Vector2I> legalMoves = new List<Vector2I>();
@@ -80,7 +156,7 @@ namespace Chess.Game.Manager
                 int fromIndex = from.Y * ChessBoardGlobals.BOARD_SIZE + from.X;
                 int toIndex = move.Y * ChessBoardGlobals.BOARD_SIZE + move.X;
                 PieceBase capturedPiece = board[toIndex];
-                
+
                 board[toIndex] = movingPiece;
                 board[fromIndex] = null;
 
